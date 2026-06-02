@@ -106,6 +106,10 @@ public sealed class AuditTrailEndpointsTests : IClassFixture<AuditTrailApiFactor
 
         var audits = await GetAudits(client, referenceCode: created.ReferenceCode);
         audits.Should().Contain(a => a.ActionType == nameof(ActionType.Restore));
+
+        // The record was only created, deleted, and restored. Re-activating it must NOT also log an
+        // Update: a restore writes exactly one entry, the explicit Restore.
+        audits.Should().NotContain(a => a.ActionType == nameof(ActionType.Update));
     }
 
     [Fact]

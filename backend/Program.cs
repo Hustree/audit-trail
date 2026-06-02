@@ -30,6 +30,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<AuditState>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 
 // OpenAPI document + a Scalar UI to explore the API (served at /scalar).
@@ -196,7 +197,7 @@ api.MapGet("/audit-trail", async (
     return Results.Ok(new PagedResult<AuditTrail>(items, pageIndex, pageSize, total));
 });
 
-api.MapPost("/audit-trail/{id:int}/restore", async (AppDbContext db, ICurrentUser currentUser, int id) =>
+api.MapPost("/audit-trail/{id:int}/restore", async (AppDbContext db, ICurrentUser currentUser, AuditState auditState, int id) =>
 {
     var entry = await db.AuditTrails.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
     if (entry is null)
@@ -239,8 +240,11 @@ api.MapPost("/audit-trail/{id:int}/restore", async (AppDbContext db, ICurrentUse
         db.Accidents.Add(restored);
     }
 
-    // Save the restored record first so the interceptor does not double-classify it.
+    // Save the restored record with auditing suppressed: re-activating the row is a normal modify
+    // that would log a redundant Update, but the explicit Restore entry below is the one we want.
+    auditState.Suppressed = true;
     await db.SaveChangesAsync();
+    auditState.Suppressed = false;
 
     // Append an explicit Restore audit entry.
     db.AuditTrails.Add(new AuditTrail

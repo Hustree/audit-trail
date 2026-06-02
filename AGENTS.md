@@ -60,9 +60,9 @@ those JSON snapshots and renders a field-level diff (`computeDiff` in `shared/di
 ## Things worth knowing before you change anything
 
 - **Restore** (`POST /api/audit-trail/{id}/restore`) re-activates a soft-deleted row (or recreates
-  it from the snapshot), then appends an explicit `Restore` entry. The re-activation save currently
-  also produces an `Update` row, so one restore writes two entries. That is a known cleanup
-  candidate, not a bug to fix blindly.
+  it from the snapshot) and logs a single explicit `Restore` entry. The re-activation save is opted
+  out of automatic auditing via `AuditState` (see `AuditSaveChangesInterceptor`), so it does not
+  also log a redundant `Update`.
 - **Timestamps**: the API returns naive UTC timestamps (no zone). The frontend normalizes them as
   UTC in `shared/diff.util.ts` (`toDate`). Preserve that when touching date handling.
 - **Demo data** is seeded in `SeedData` in `backend/Program.cs`: a week of incident history with one

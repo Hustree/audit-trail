@@ -17,10 +17,12 @@ namespace AuditTrailPoc.Api.Auditing;
 public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
 {
     private readonly ICurrentUser _currentUser;
+    private readonly AuditState _auditState;
 
-    public AuditSaveChangesInterceptor(ICurrentUser currentUser)
+    public AuditSaveChangesInterceptor(ICurrentUser currentUser, AuditState auditState)
     {
         _currentUser = currentUser;
+        _auditState = auditState;
     }
 
     public override InterceptionResult<int> SavingChanges(
@@ -55,6 +57,13 @@ public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
     /// </summary>
     private void GenerateAuditEntries(AppDbContext context)
     {
+        // A code path (the restore flow) may opt this save out of automatic auditing because it
+        // logs its own explicit entry instead.
+        if (_auditState.Suppressed)
+        {
+            return;
+        }
+
         var actor = _currentUser.UserId;
         var timestamp = DateTime.UtcNow;
 

@@ -42,7 +42,7 @@ public sealed class AuditInterceptorTests : IDisposable
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
-            .AddInterceptors(new AuditSaveChangesInterceptor(new FakeCurrentUser(actor)))
+            .AddInterceptors(new AuditSaveChangesInterceptor(new FakeCurrentUser(actor), new AuditState()))
             .Options;
 
         return new AppDbContext(options);
