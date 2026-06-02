@@ -1,0 +1,5 @@
+/* App-shell styles live in the global design system (styles.scss):
+   .app, .topnav, .container are all defined there so theme tokens cascade. */
+:host {
+  display: block;
+}

@@ -1,0 +1,27 @@
+# Normalize line endings: LF in the repo, auto-converted on checkout per OS.
+* text=auto eol=lf
+
+# Explicitly text
+*.cs       text
+*.ts       text
+*.html     text
+*.scss     text
+*.css      text
+*.json     text
+*.md       text
+*.yml      text
+*.yaml     text
+*.sln      text
+*.csproj   text
+
+# Scripts keep LF
+*.sh       text eol=lf
+Makefile   text eol=lf
+
+# Binary assets
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.ico      binary
+*.db       binary

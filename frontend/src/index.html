@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Audit Trail · Forensic ledger</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    // Bootstrap the saved theme onto <body> background before first paint so the
+    // canvas doesn't flash the wrong color while Angular hydrates.
+    (function () {
+      try {
+        var saved = JSON.parse(localStorage.getItem('audit-trail.tweaks') || '{}');
+        document.documentElement.style.background = saved.theme === 'dark' ? '#0e1218' : '#eef1f4';
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

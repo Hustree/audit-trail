@@ -1,0 +1,129 @@
+<div>
+  <div class="page-header">
+    <div class="titleblock">
+      <div class="eyebrow"><app-icon name="alert" [s]="13" /> Safety · Incidents</div>
+      <h1>Incidents</h1>
+      <p class="sub">Logged workplace incidents. Edits and deletions are tracked in the audit trail.</p>
+    </div>
+    <button class="btn btn-primary btn-lg" (click)="openCreate()"><app-icon name="plus" [s]="16" /> New incident</button>
+  </div>
+
+  @if (error()) {
+    <div class="alert"><app-icon name="alert" [s]="16" /> {{ error() }}</div>
+  }
+
+  @if (showForm()) {
+    <div class="card form-card card-pad fade-in" style="margin-bottom: var(--s-4)">
+      <h2 style="margin: 0 0 var(--s-4); font-family: var(--font-display); font-size: var(--fs-700)">
+        {{ editingId() != null ? 'Edit incident' : 'Log a new incident' }}
+      </h2>
+
+      <div class="field" [class.invalid]="titleInvalid()">
+        <label>Title</label>
+        <input name="title" [ngModel]="form().title" (ngModelChange)="setField('title', $event)" placeholder="What happened?" />
+        @if (titleInvalid()) { <span class="err"><app-icon name="alert" [s]="12" /> A title is required</span> }
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Severity</label>
+          <select name="severity" [ngModel]="form().severity" (ngModelChange)="setField('severity', $event)">
+            @for (o of severityOptions; track o) { <option>{{ o }}</option> }
+          </select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select name="status" [ngModel]="form().status" (ngModelChange)="setField('status', $event)">
+            @for (o of statusOptions; track o) { <option>{{ o }}</option> }
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Location</label>
+        <input name="location" [ngModel]="form().location" (ngModelChange)="setField('location', $event)" placeholder="Where did it occur?" />
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" (click)="save()"><app-icon name="check" [s]="15" /> {{ editingId() != null ? 'Save changes' : 'Log incident' }}</button>
+        <button class="btn" (click)="cancelForm()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  <div class="card">
+    <div class="card-head">
+      <h2>All incidents</h2>
+      <span class="count">{{ loading() ? '-' : accidents().length }} records</span>
+    </div>
+
+    <div class="grid-wrap">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th style="width:96px">Ref</th>
+            <th>Incident</th>
+            <th style="width:110px">Severity</th>
+            <th style="width:140px">Status</th>
+            <th style="width:120px">Reported</th>
+            <th class="right" style="width:130px"></th>
+          </tr>
+        </thead>
+
+        @if (loading()) {
+          <tbody>
+            @for (r of [0,1,2,3,4]; track r) {
+              <tr>
+                <td><span class="sk" style="width:60px"></span></td>
+                <td><span class="sk" style="width:80%"></span></td>
+                <td><span class="sk" style="width:70px"></span></td>
+                <td><span class="sk" style="width:90px"></span></td>
+                <td><span class="sk" style="width:70px"></span></td>
+                <td class="right"><span class="sk" style="width:80px"></span></td>
+              </tr>
+            }
+          </tbody>
+        } @else if (accidents().length === 0) {
+          <tbody>
+            <tr>
+              <td colspan="6">
+                <div class="empty">
+                  <span class="emoji-free-mark"><app-icon name="shield" [s]="34" [w]="1.4" /></span>
+                  <h3>No incidents on record</h3>
+                  <p>That's a good thing, but when something happens, log it here so it enters the audit trail.</p>
+                  <button class="btn btn-primary btn-sm" (click)="openCreate()" style="margin-top:4px"><app-icon name="plus" [s]="14" /> Log the first incident</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        } @else {
+          <tbody>
+            @for (a of accidents(); track a.id) {
+              <tr [class.flash]="flashId() === a.id">
+                <td class="num">{{ a.referenceCode }}</td>
+                <td>
+                  <div class="primary-cell">{{ a.title }}</div>
+                  <div class="muted" style="font-size: var(--fs-300)">{{ a.location || '-' }}</div>
+                </td>
+                <td><span class="badge sev-{{ a.severity }}"><span class="dot"></span>{{ a.severity }}</span></td>
+                <td><span class="statuschip"><span class="dot" [style.background]="statusColor(a.status)"></span>{{ a.status }}</span></td>
+                <td>
+                  <div style="display:flex; flex-direction:column; gap:1px">
+                    <span class="mono" style="font-size: var(--fs-300)">{{ a.createdBy }}</span>
+                    <span class="muted" style="font-size: var(--fs-200)">{{ rel(a.createdDate) }}</span>
+                  </div>
+                </td>
+                <td class="right">
+                  <div class="actions">
+                    <button class="btn btn-sm" (click)="openEdit(a)"><app-icon name="edit" [s]="13" /> Edit</button>
+                    <button class="btn btn-sm btn-danger" (click)="remove(a)" aria-label="Delete"><app-icon name="trash" [s]="13" /></button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        }
+      </table>
+    </div>
+  </div>
+</div>

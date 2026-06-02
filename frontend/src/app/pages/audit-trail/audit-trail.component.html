@@ -1,0 +1,235 @@
+<div>
+  <div class="page-header">
+    <div class="titleblock">
+      <div class="eyebrow"><app-icon name="shield" [s]="13" /> Append-only log</div>
+      <h1>Audit Trail</h1>
+      <p class="sub">Every change is captured field-by-field. Deletions can be restored, nothing is erased.</p>
+    </div>
+    <div class="row">
+      <span class="badge outline mono">{{ loading() ? '-' : rows().length }} entries</span>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert"><app-icon name="alert" [s]="16" /> {{ error() }}</div>
+  }
+
+  <!-- Filters -->
+  <div class="card" style="margin-bottom: var(--s-4)">
+    <div class="filter-head" (click)="toggleFilters()">
+      <div class="ft-left">
+        <span class="chev" [class.open]="filtersOpen()"><app-icon name="chevron" [s]="16" /></span>
+        <app-icon name="filter" [s]="15" /> Filters
+        @if (activeCount() > 0) { <span class="activecount">{{ activeCount() }}</span> }
+      </div>
+      <span class="muted" style="font-size: var(--fs-300)">{{ filtersOpen() ? 'Hide' : 'Show' }}</span>
+    </div>
+
+    <div class="filter-body" [class.collapsed]="!filtersOpen()">
+      <div class="filter-field">
+        <label>Search</label>
+        <div class="search-wrap">
+          <span class="sicon"><app-icon name="search" [s]="15" /></span>
+          <input placeholder="Field, value, table…" [ngModel]="filter().q" (ngModelChange)="setField('q', $event)" />
+        </div>
+      </div>
+      <div class="filter-field">
+        <label>Action type</label>
+        <select [ngModel]="filter().action" (ngModelChange)="setField('action', $event)">
+          <option>All</option>
+          @for (o of actionOptions; track o) { <option>{{ o }}</option> }
+        </select>
+      </div>
+      <div class="filter-field">
+        <label>Module</label>
+        <select [ngModel]="filter().module" (ngModelChange)="setField('module', $event)">
+          <option>All</option>
+          @for (o of moduleOptions(); track o) { <option>{{ o }}</option> }
+        </select>
+      </div>
+      <div class="filter-field">
+        <label>Created by</label>
+        <input placeholder="username" [ngModel]="filter().by" (ngModelChange)="setField('by', $event)" />
+      </div>
+      <div class="filter-field">
+        <label>Created date</label>
+        <input type="date" [ngModel]="filter().date" (ngModelChange)="setField('date', $event)" />
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn btn-ghost btn-sm" (click)="reset()"><app-icon name="reset" [s]="14" /> Reset</button>
+      <span class="spacer"></span>
+      <button class="btn btn-sm" (click)="exportCsv()"><app-icon name="download" [s]="14" /> Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Change history -->
+  <div class="card">
+    <div class="card-head">
+      <h2>Change history</h2>
+      <div class="head-controls">
+        <div class="minitoggle" role="group" aria-label="Diff layout">
+          <button [class.active]="tweaks.tweaks().diffLayout === 'unified'" (click)="tweaks.set('diffLayout', 'unified')">Old → New</button>
+          <button [class.active]="tweaks.tweaks().diffLayout === 'columns'" (click)="tweaks.set('diffLayout', 'columns')">Side-by-side</button>
+        </div>
+        <div class="viewswitch" role="tablist" aria-label="Change history view">
+          <button role="tab" [class.active]="view() === 'detailed'" (click)="view.set('detailed')"><app-icon name="shield" [s]="13" /><span class="lbl">Detailed</span></button>
+          <button role="tab" [class.active]="view() === 'compact'" (click)="view.set('compact')"><app-icon name="filter" [s]="13" /><span class="lbl">Compact</span></button>
+          <button role="tab" [class.active]="view() === 'timeline'" (click)="view.set('timeline')"><app-icon name="clock" [s]="13" /><span class="lbl">Timeline</span></button>
+        </div>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="grid-wrap">
+        <table class="grid">
+          <thead><tr><th style="width:168px">Entry</th><th>Change</th><th style="width:150px">Author</th><th class="right" style="width:110px"></th></tr></thead>
+          <tbody>
+            @for (r of [0,1,2,3]; track r) {
+              <tr>
+                <td><span class="sk" style="width:120px"></span></td>
+                <td><span class="sk" style="width:90%"></span></td>
+                <td><span class="sk" style="width:100px"></span></td>
+                <td class="right"><span class="sk" style="width:60px"></span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (rows().length === 0) {
+      <div class="empty">
+        <span class="emoji-free-mark"><app-icon name="search" [s]="34" [w]="1.4" /></span>
+        <h3>No matching entries</h3>
+        <p>No audit entries match these filters. Try widening the date range or clearing the search.</p>
+        <button class="btn btn-sm" (click)="reset()" style="margin-top:4px"><app-icon name="reset" [s]="14" /> Clear filters</button>
+      </div>
+    } @else if (view() === 'compact') {
+      <!-- Compact -->
+      <div class="clist">
+        @for (e of rows(); track e.id) {
+          <div class="crow {{ e.left }}" [class.open]="isOpen(e.id)" [class.flash]="flashId() === e.id">
+            <div class="crow-main" (click)="toggleRow(e.id)">
+              <span class="badge act-{{ e.actionType }}"><span class="dot"></span>{{ e.actionType }}</span>
+              <div class="c-meta">
+                <span class="t">{{ e.tableName }}</span>
+                <span class="m">{{ e.module }} · #{{ e.id }}</span>
+              </div>
+              @if (e.tags.length) {
+                <div class="keytags">
+                  @for (tg of tagsShown(e, 5); track tg.key) { <span class="ktag {{ tg.cls }}">{{ tg.key }}</span> }
+                  @if (tagsMore(e, 5) > 0) { <span class="ktag more">+{{ tagsMore(e, 5) }}</span> }
+                </div>
+              } @else {
+                <span class="muted" style="font-size: var(--fs-200)">no field changes</span>
+              }
+              <div class="c-author">
+                <span class="a"><app-icon name="user" [s]="12" /> {{ e.createdBy }}</span>
+                <span class="w" [title]="e.full">{{ e.rel }}</span>
+              </div>
+              <div class="crow-action" (click)="$event.stopPropagation()">
+                @if (e.restorable) {
+                  <button class="btn btn-sm" (click)="restore(e)"><app-icon name="restore" [s]="13" /> Restore</button>
+                }
+              </div>
+              <span class="c-chev"><app-icon name="chevron" [s]="14" /></span>
+            </div>
+            @if (isOpen(e.id)) {
+              <div class="crow-detail">
+                <div class="wrap">
+                  <app-diff-viewer [oldData]="e.oldObj" [newData]="e.newObj" [layout]="tweaks.tweaks().diffLayout" [showUnchanged]="tweaks.tweaks().showUnchanged" />
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    } @else if (view() === 'timeline') {
+      <!-- Timeline -->
+      <div class="tl">
+        @for (g of timelineGroups(); track g.label) {
+          <div class="tl-group">
+            <div class="tl-daylabel">{{ g.label }}<span class="ln"></span></div>
+            <div class="tl-items">
+              @for (e of g.items; track e.id) {
+                <div class="tl-item {{ e.node }}" [class.open]="isOpen(e.id)">
+                  <span class="node"></span>
+                  <div class="tl-card" [class.flash]="flashId() === e.id">
+                    <div class="tl-head" (click)="toggleRow(e.id)">
+                      <span class="badge act-{{ e.actionType }}"><span class="dot"></span>{{ e.actionType }}</span>
+                      <div class="grow">
+                        <div class="l1">
+                          <span class="tbl">{{ e.tableName }}</span>
+                          <span class="dot-sep">·</span>
+                          <span class="mod">{{ e.module }}</span>
+                        </div>
+                        @if (e.tags.length) {
+                          <div class="keytags">
+                            @for (tg of tagsShown(e, 6); track tg.key) { <span class="ktag {{ tg.cls }}">{{ tg.key }}</span> }
+                            @if (tagsMore(e, 6) > 0) { <span class="ktag more">+{{ tagsMore(e, 6) }}</span> }
+                          </div>
+                        }
+                      </div>
+                      <div class="who">
+                        <span class="u"><app-icon name="user" [s]="12" /> {{ e.createdBy }}</span>
+                        <span class="mono" style="font-size: var(--fs-200)">{{ e.time }}</span>
+                      </div>
+                      @if (e.restorable) {
+                        <button class="btn btn-sm" (click)="$event.stopPropagation(); restore(e)"><app-icon name="restore" [s]="13" /> Restore</button>
+                      }
+                      <span class="c-chev"><app-icon name="chevron" [s]="14" /></span>
+                    </div>
+                    @if (isOpen(e.id)) {
+                      <div class="tl-body">
+                        <div class="wrap">
+                          <app-diff-viewer [oldData]="e.oldObj" [newData]="e.newObj" [layout]="tweaks.tweaks().diffLayout" [showUnchanged]="tweaks.tweaks().showUnchanged" />
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Detailed -->
+      <div class="grid-wrap">
+        <table class="grid">
+          <thead><tr><th style="width:168px">Entry</th><th>Change</th><th style="width:150px">Author</th><th class="right" style="width:110px"></th></tr></thead>
+          <tbody>
+            @for (e of rows(); track e.id) {
+              <tr [class.flash]="flashId() === e.id">
+                <td style="vertical-align: top">
+                  <div style="display:flex; flex-direction:column; gap:6px; padding-top:4px">
+                    <span class="badge act-{{ e.actionType }}" style="align-self:flex-start"><span class="dot"></span>{{ e.actionType }}</span>
+                    <span class="num" style="font-size: var(--fs-300)">#{{ e.id }}</span>
+                    <div style="display:flex; flex-direction:column; gap:1px">
+                      <span class="primary-cell mono" style="font-size: var(--fs-300)">{{ e.tableName }}</span>
+                      <span class="muted" style="font-size: var(--fs-200)">{{ e.module }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td style="vertical-align: top; padding-top: var(--row-py)">
+                  <app-diff-viewer [oldData]="e.oldObj" [newData]="e.newObj" [layout]="tweaks.tweaks().diffLayout" [showUnchanged]="tweaks.tweaks().showUnchanged" />
+                </td>
+                <td style="vertical-align: top; padding-top: calc(var(--row-py) + 4px)">
+                  <div style="display:flex; flex-direction:column; gap:3px">
+                    <span class="primary-cell" style="display:flex; align-items:center; gap:5px"><app-icon name="user" [s]="13" /> {{ e.createdBy }}</span>
+                    <span class="muted mono" style="font-size: var(--fs-200)" [title]="e.full">{{ e.rel }}</span>
+                  </div>
+                </td>
+                <td class="right" style="vertical-align: top; padding-top: calc(var(--row-py) + 2px)">
+                  @if (e.restorable) {
+                    <button class="btn btn-sm" (click)="restore(e)"><app-icon name="restore" [s]="14" /> Restore</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

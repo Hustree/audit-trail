@@ -1,0 +1,44 @@
+<div
+  class="app"
+  [attr.data-theme]="t.tweaks().theme"
+  [attr.data-density]="t.tweaks().density"
+  [style.--brand-h]="t.accentObj().h"
+  [style.--brand-c]="t.accentObj().c"
+>
+  <nav class="topnav">
+    <div class="brand">
+      <svg class="mark" width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+        <path d="M14 3.5v21" stroke="currentColor" stroke-opacity="0.35" stroke-width="1.6" stroke-linecap="round" />
+        <rect x="10.2" y="3.4" width="7.6" height="7.6" rx="1.6" transform="rotate(45 14 7.2)" fill="none" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.6" />
+        <rect x="9.6" y="9.6" width="8.8" height="8.8" rx="1.8" transform="rotate(45 14 14)" fill="var(--nav-active)" />
+        <rect x="10.8" y="17.4" width="6.4" height="6.4" rx="1.4" transform="rotate(45 14 20.6)" fill="none" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.6" />
+      </svg>
+      <span>Audit Trail<small>Forensic ledger</small></span>
+    </div>
+
+    <div class="nav-links">
+      <a routerLink="/audit-trail" routerLinkActive="active"><app-icon name="shield" [s]="15" /> Audit Trail</a>
+      <a routerLink="/accidents" routerLinkActive="active"><app-icon name="alert" [s]="15" /> Incidents</a>
+    </div>
+
+    <div class="nav-spacer"></div>
+
+    <div class="nav-tools">
+      <button class="iconbtn" title="Guided tour" (click)="tour.start()">
+        <app-icon name="info" [s]="16" /> Tour
+      </button>
+      <button class="iconbtn" title="Toggle theme" (click)="toggleTheme()">
+        <app-icon [name]="t.tweaks().theme === 'dark' ? 'sun' : 'moon'" [s]="16" />
+      </button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <router-outlet></router-outlet>
+  </main>
+
+  <app-toast-stack></app-toast-stack>
+  <app-confirm-dialog></app-confirm-dialog>
+  <app-tweaks-panel></app-tweaks-panel>
+  <app-tour-overlay></app-tour-overlay>
+</div>
