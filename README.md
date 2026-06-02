@@ -98,6 +98,24 @@ The app opens on **Audit Trail**, pre-seeded with a week of incident history (lo
 
 Prefer a hands-off walkthrough? Click **Tour** in the top-right for a guided tour of the screen.
 
+## 🤖 Hand off to an AI agent
+
+This repo is built to be picked up by a coding agent (Claude Code, Codex, Cursor, and friends). It
+ships an [AGENTS.md](AGENTS.md) (and a [CLAUDE.md](CLAUDE.md)) that orient an agent in seconds: what
+the project is, how to run and test it, a map of the code, and the things to know before changing
+anything.
+
+Clone the repo, open your terminal AI inside it, and paste this prompt:
+
+```text
+You are picking up the Audit Trail repo. Read AGENTS.md and README.md, then the
+core file backend/Auditing/AuditSaveChangesInterceptor.cs. Build and run it with
+`make dev` (backend on :5080, frontend on :4200), then run the tests:
+`dotnet test`, `cd frontend && npm run test:ci`, and `cd e2e && npm test`.
+Summarize the architecture in a few bullets, then propose the next improvement
+from the README roadmap. Do not change behavior until I approve the plan.
+```
+
 ## 🔌 API
 
 Base URL `http://localhost:5080/api`. Pass an optional `X-Demo-User` header to set the actor. An interactive API explorer (Scalar, backed by OpenAPI) is served at **http://localhost:5080/scalar** when the backend is running.
